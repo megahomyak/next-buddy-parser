@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "fast-json-stable-stringify": "^2.1.0",
     "node-html-parser": "^7.0.1"
   }
 }

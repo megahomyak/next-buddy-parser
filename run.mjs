@@ -1,4 +1,5 @@
 import * as nodeHtmlParser from "node-html-parser";
+import stableStringify from "fast-json-stable-stringify";
 
 let buildRing = async (requester, firstUrl) => {
     let getNext = async url => {
@@ -56,17 +57,23 @@ let buildRing = async (requester, firstUrl) => {
         }
         return null;
     };
-    let assertComplete = (idealRing, actualRingResult) => {
-        if (JSON.stringify(idealRing) != JSON.stringify(actualRingResult.complete)) {
-            throw new Error(`${JSON.stringify(idealRing)} not complete in ${JSON.stringify(actualRingResult)}`);
+    let assertEqual = (a, b) => {
+        let as = stableStringify(a);
+        let bs = stableStringify(b);
+        if (as != bs) {
+            throw new Error(`${as} != ${bs}`);
         }
     };
-    let assertBroken = (idealRing, actualRingResult) => {
-        if (JSON.stringify(idealRing) != JSON.stringify(actualRingResult.broken)) {
-            throw new Error(`${JSON.stringify(idealRing)} not broken in ${JSON.stringify(actualRingResult)}`);
-        }
-    };
-    assertComplete(["https://test1.com", "https://test2.com"], await buildRing(testRequester, "https://test1.com"));
-    assertBroken(["https://test1.com", "https://test2.com", "https://test3.com"], await buildRing(testRequester2, "https://test1.com"));
-    assertBroken(["https://test1.com", "https://test2.com"], await buildRing(testRequester3, "https://test1.com"));
+    assertEqual(
+        { complete: ["https://test1.com", "https://test2.com"] },
+        await buildRing(testRequester, "https://test1.com"),
+    );
+    assertEqual(
+        { broken: ["https://test1.com", "https://test2.com", "https://test3.com"] },
+        await buildRing(testRequester2, "https://test1.com"),
+    );
+    assertEqual(
+        { broken: ["https://test1.com", "https://test2.com"] },
+        await buildRing(testRequester3, "https://test1.com"),
+    );
 }
