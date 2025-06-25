@@ -35,7 +35,7 @@ let buildRing = async (requester, firstUrl) => {
             return `<html><body><p>My site</p><a href="https://test2.com"> next  buddy </a></p></body></html>`;
         }
         if (url == "https://test2.com") {
-            return `<html><body><img alt="" src="test.png"><a href="https://test1.com">next buddy</a></p></body></html>`;
+            return `<html><body><img alt="" src="test.png"><a href="https://test1.com">nEXT BUDDY</a></p></body></html>`;
         }
         return null;
     };
