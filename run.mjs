@@ -30,33 +30,6 @@ let buildRing = async (requester, firstUrl) => {
 };
 
 {
-    let testRequester = async url => {
-        if (url == "https://test1.com") {
-            return `<html><body><p>My site</p><a href="https://test2.com"> next  buddy </a></p></body></html>`;
-        }
-        if (url == "https://test2.com") {
-            return `<html><body><img alt="" src="test.png"><a href="https://test1.com">nEXT BUDDY</a></p></body></html>`;
-        }
-        return null;
-    };
-    let testRequester2 = async url => {
-        if (url == "https://test1.com") {
-            return `<a href="https://test2.com">next buddy</a>`;
-        }
-        if (url == "https://test2.com") {
-            return `<a href="https://test3.com">next buddy</a>`;
-        }
-        return null;
-    };
-    let testRequester3 = async url => {
-        if (url == "https://test1.com") {
-            return `<a href="https://test2.com">next buddy</a>`;
-        }
-        if (url == "https://test2.com") {
-            return `<a href="https://test1.com">not next buddy</a>`;
-        }
-        return null;
-    };
     let assertEqual = (a, b) => {
         let as = stableStringify(a);
         let bs = stableStringify(b);
@@ -66,14 +39,38 @@ let buildRing = async (requester, firstUrl) => {
     };
     assertEqual(
         { complete: ["https://test1.com", "https://test2.com"] },
-        await buildRing(testRequester, "https://test1.com"),
+        await buildRing(async url => {
+            if (url == "https://test1.com") {
+                return `<html><body><p>My site</p><a href="https://test2.com"> next  buddy </a></p></body></html>`;
+            }
+            if (url == "https://test2.com") {
+                return `<html><body><img alt="" src="test.png"><a href="https://test1.com">nEXT BUDDY</a></p></body></html>`;
+            }
+            return null;
+        }, "https://test1.com"),
     );
     assertEqual(
         { broken: ["https://test1.com", "https://test2.com", "https://test3.com"] },
-        await buildRing(testRequester2, "https://test1.com"),
+        await buildRing(async url => {
+            if (url == "https://test1.com") {
+                return `<a href="https://test2.com">next buddy</a>`;
+            }
+            if (url == "https://test2.com") {
+                return `<a href="https://test3.com">next buddy</a>`;
+            }
+            return null;
+        }, "https://test1.com"),
     );
     assertEqual(
         { broken: ["https://test1.com", "https://test2.com"] },
-        await buildRing(testRequester3, "https://test1.com"),
+        await buildRing(async url => {
+            if (url == "https://test1.com") {
+                return `<a href="https://test2.com">next buddy</a>`;
+            }
+            if (url == "https://test2.com") {
+                return `<a href="https://test1.com">not next buddy</a>`;
+            }
+            return null;
+        }, "https://test1.com"),
     );
 }
