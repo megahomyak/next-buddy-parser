@@ -58,12 +58,12 @@ let buildRing = async (requester, firstUrl) => {
     };
     let assertComplete = (idealRing, actualRingResult) => {
         if (JSON.stringify(idealRing) != JSON.stringify(actualRingResult.complete)) {
-            throw new Error(`Not equal: ${JSON.stringify(idealRing)} and ${JSON.stringify(actualRingResult)}`);
+            throw new Error(`${JSON.stringify(idealRing)} not complete in ${JSON.stringify(actualRingResult)}`);
         }
     };
     let assertBroken = (idealRing, actualRingResult) => {
         if (JSON.stringify(idealRing) != JSON.stringify(actualRingResult.broken)) {
-            throw new Error(`Not equal: ${JSON.stringify(idealRing)} and ${JSON.stringify(actualRingResult)}`);
+            throw new Error(`${JSON.stringify(idealRing)} not broken in ${JSON.stringify(actualRingResult)}`);
         }
     };
     assertComplete(["https://test1.com", "https://test2.com"], await buildRing(testRequester, "https://test1.com"));
