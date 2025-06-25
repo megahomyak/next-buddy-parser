@@ -1,0 +1,72 @@
+import * as nodeHtmlParser from "node-html-parser";
+
+let buildRing = async (requester, firstUrl) => {
+    let getNext = async url => {
+        let splitWords = text => text.split(/\s+/).filter(s => s.length != 0);
+        let compareWords = (a, b) => JSON.stringify(a) == JSON.stringify(b);
+        let docText = await requester(url);
+        if (docText == null) return null;
+        let doc = nodeHtmlParser.parse(docText);
+        for (let a of doc.getElementsByTagName("a")) {
+            let words = splitWords(a.textContent.toLowerCase());
+            if (compareWords(words, ["next", "buddy"])) {
+                return a.attributes["href"];
+            }
+        }
+        return null;
+    };
+    let ring = [firstUrl];
+    for (;;) {
+        let nextUrl = await getNext(ring[ring.length - 1]);
+        if (nextUrl == null) {
+            return { broken: ring }
+        }
+        if (nextUrl == firstUrl) {
+            return { complete: ring };
+        }
+        ring.push(nextUrl);
+    }
+};
+
+{
+    let testRequester = async url => {
+        if (url == "https://test1.com") {
+            return `<html><body><p>My site</p><a href="https://test2.com"> next  buddy </a></p></body></html>`;
+        }
+        if (url == "https://test2.com") {
+            return `<html><body><img alt="" src="test.png"><a href="https://test1.com">next buddy</a></p></body></html>`;
+        }
+        return null;
+    };
+    let testRequester2 = async url => {
+        if (url == "https://test1.com") {
+            return `<a href="https://test2.com">next buddy</a>`;
+        }
+        if (url == "https://test2.com") {
+            return `<a href="https://test3.com">next buddy</a>`;
+        }
+        return null;
+    };
+    let testRequester3 = async url => {
+        if (url == "https://test1.com") {
+            return `<a href="https://test2.com">next buddy</a>`;
+        }
+        if (url == "https://test2.com") {
+            return `<a href="https://test1.com">not next buddy</a>`;
+        }
+        return null;
+    };
+    let assertComplete = (idealRing, actualRingResult) => {
+        if (JSON.stringify(idealRing) != JSON.stringify(actualRingResult.complete)) {
+            throw new Error(`Not equal: ${JSON.stringify(idealRing)} and ${JSON.stringify(actualRingResult)}`);
+        }
+    };
+    let assertBroken = (idealRing, actualRingResult) => {
+        if (JSON.stringify(idealRing) != JSON.stringify(actualRingResult.broken)) {
+            throw new Error(`Not equal: ${JSON.stringify(idealRing)} and ${JSON.stringify(actualRingResult)}`);
+        }
+    };
+    assertComplete(["https://test1.com", "https://test2.com"], await buildRing(testRequester, "https://test1.com"));
+    assertBroken(["https://test1.com", "https://test2.com", "https://test3.com"], await buildRing(testRequester2, "https://test1.com"));
+    assertBroken(["https://test1.com", "https://test2.com"], await buildRing(testRequester3, "https://test1.com"));
+}
