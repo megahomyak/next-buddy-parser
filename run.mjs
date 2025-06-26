@@ -1,5 +1,6 @@
 import * as nodeHtmlParser from "node-html-parser";
 import stableStringify from "fast-json-stable-stringify";
+import * as url from "node:url";
 
 let buildRing = async (requester, firstUrl) => {
     let getNext = async url => {
@@ -16,16 +17,23 @@ let buildRing = async (requester, firstUrl) => {
         }
         return null;
     };
-    let ring = [firstUrl];
+    let visitedDomains = new Set();
+    let ring = [];
+    let currentUrl = firstUrl;
     for (;;) {
-        let nextUrl = await getNext(ring[ring.length - 1]);
-        if (nextUrl == null) {
+        ring.push(currentUrl);
+        let hostname = new url.URL(currentUrl).hostname;
+        if (visitedDomains.has(hostname)) {
+            return { trapped: ring };
+        }
+        visitedDomains.add(hostname);
+        currentUrl = await getNext(currentUrl);
+        if (currentUrl == null) {
             return { broken: ring }
         }
-        if (nextUrl == firstUrl) {
+        if (currentUrl == firstUrl) {
             return { complete: ring };
         }
-        ring.push(nextUrl);
     }
 };
 
@@ -69,6 +77,24 @@ let buildRing = async (requester, firstUrl) => {
             }
             if (url == "https://test2.com") {
                 return `<a href="https://test1.com">not next buddy</a>`;
+            }
+            return null;
+        }, "https://test1.com"),
+    );
+    assertEqual(
+        { trapped: ["https://test1.com", "https://test2.com", "https://test2.com/trap1"] },
+        await buildRing(async url => {
+            if (url == "https://test1.com") {
+                return `<a href="https://test2.com">next buddy</a>`;
+            }
+            if (url == "https://test2.com") {
+                return `<a href="https://test2.com/trap1">next buddy</a>`;
+            }
+            if (url == "https://test2.com/trap1") {
+                return `<a href="https://test2.com/trap2">next buddy</a>`;
+            }
+            if (url == "https://test2.com/trap2") {
+                return `<a href="https://test2.com/trapN">next buddy</a>`;
             }
             return null;
         }, "https://test1.com"),
