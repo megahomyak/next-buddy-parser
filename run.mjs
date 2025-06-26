@@ -99,4 +99,19 @@ let buildRing = async (requester, firstUrl) => {
             return null;
         }, "https://test1.com"),
     );
+    assertEqual(
+        { trapped: ["https://test1.com", "https://test2.com", "https://test3.com", "https://test2.com"] },
+        await buildRing(async url => {
+            if (url == "https://test1.com") {
+                return `<a href="https://test2.com">next buddy</a>`;
+            }
+            if (url == "https://test2.com") {
+                return `<a href="https://test3.com">next buddy</a>`;
+            }
+            if (url == "https://test3.com") {
+                return `<a href="https://test2.com">next buddy</a>`;
+            }
+            return null;
+        }, "https://test1.com"),
+    );
 }
